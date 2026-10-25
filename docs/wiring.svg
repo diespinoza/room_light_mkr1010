@@ -34,8 +34,10 @@
     <!-- screw terminal block, 2 positions -->
     <rect x="260" y="305" width="60" height="60" rx="3" fill="#2f6f3e"/>
     <circle cx="290" cy="320" r="7" fill="#aaa"/><circle cx="290" cy="350" r="7" fill="#aaa"/>
-    <text x="330" y="323" class="t">+ (centre pin)</text>
-    <text x="330" y="353" class="t">− (sleeve)</text>
+    <text x="290" y="298" text-anchor="middle" class="ts">screw terminal</text>
+    <text x="305" y="316" font-size="10" fill="#fff" font-weight="bold">+</text>
+    <text x="305" y="356" font-size="10" fill="#fff" font-weight="bold">−</text>
+    <text x="290" y="380" text-anchor="middle" class="ts">+ = centre pin, − = sleeve</text>
   </g>
 
   <!-- ================= Diode in the + lead ================= -->
@@ -44,7 +46,7 @@
     <rect x="400" y="312" width="44" height="16" rx="3" fill="#333"/>
     <rect x="432" y="312" width="6" height="16" fill="#ddd"/>
     <text x="422" y="302" text-anchor="middle" class="ts">1N4007</text>
-    <text x="422" y="345" text-anchor="middle" class="note">band toward strip</text>
+    <text x="422" y="372" text-anchor="middle" class="note">band toward strip</text>
     <line x1="444" y1="320" x2="560" y2="320" class="w5v"/>
   </g>
   <!-- ground bus from terminal -->
@@ -156,7 +158,7 @@
 
   <!-- ================= Ground: MKR GND → screw terminal − ================= -->
   <path d="M358 247 L 358 275 L 230 275 L 230 390 L 290 390 L 290 357" class="wgnd"/>
-  <text x="236" y="404" class="ts">one short wire, no alligator clip — all three grounds meet at the terminal</text>
+  <text x="30" y="470" class="ts">GND: one short wire, no alligator clip — all three grounds meet at the terminal</text>
 
   <!-- JST connections from bus -->
   <line x1="560" y1="320" x2="580" y2="320" class="w5v"/>
