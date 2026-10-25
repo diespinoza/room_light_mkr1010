@@ -1,0 +1,22 @@
+# WiFi credentials (copy secrets.example.h to secrets.h and fill in)
+secrets.h
+
+# Arduino IDE / build output
+build/
+*.bin
+*.elf
+*.hex
+*.map
+
+# Editor and tool state
+.claude/
+.vscode/
+.idea/
+*~
+*.swp
+
+# Fritzing autosaves/backups
+*.fzz.bak
+
+# Claude desktop app device node
+.mcp.json
