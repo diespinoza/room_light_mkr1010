@@ -11,6 +11,7 @@
 //   bri N            master brightness 0..255
 //   fade MS          fade time in ms (0 = instant)
 //   cap MA           current cap in mA (default from config.h)
+//   refresh MS       idle resend interval; 0 = never resend (diagnostic)
 //   pix I r g b w    one pixel, immediate (for finding the data direction)
 //   test             step through R, G, B, W, all, off — 1 s each
 //   pintest          hold the data pin HIGH for 10 s so a multimeter can
@@ -47,6 +48,7 @@ void printHelp() {
   Serial.println(F("  bri N          master brightness 0..255"));
   Serial.println(F("  fade MS        fade time (0 = instant)"));
   Serial.println(F("  cap MA         current cap in mA"));
+  Serial.println(F("  refresh MS     idle resend interval, 0 = off"));
   Serial.println(F("  pix I r g b w  one pixel, immediate"));
   Serial.println(F("  test           R, G, B, W, all, off"));
   Serial.println(F("  pintest        data pin HIGH for 10 s (meter: ~3.3 V)"));
@@ -63,6 +65,7 @@ void printStatus() {
   Serial.print(F("  fade="));    Serial.print(fadeMs); Serial.print(F("ms"));
   Serial.print(F("  est="));     Serial.print(strip.estimatedMa()); Serial.print(F("mA"));
   Serial.print(F("  cap="));     Serial.print(strip.currentCapMa()); Serial.print(F("mA"));
+  Serial.print(F("  refresh=")); Serial.print(strip.refreshMs()); Serial.print(F("ms"));
   Serial.println(strip.wasLimited() ? F("  LIMITED") : F(""));
 }
 
@@ -98,6 +101,8 @@ void handleLine(char *s) {
     fadeMs = (uint16_t)constrain(atol(tok[1]), 0L, 60000L);
   } else if (!strcmp(tok[0], "cap") && n == 2) {
     strip.setCurrentCapMa((uint16_t)constrain(atol(tok[1]), 0L, 20000L));
+  } else if (!strcmp(tok[0], "refresh") && n == 2) {
+    strip.setRefreshMs((uint32_t)constrain(atol(tok[1]), 0L, 3600000L));
   } else if (!strcmp(tok[0], "pix") && n == 6) {
     testStep = -1;
     strip.setPixel((uint16_t)atol(tok[1]),

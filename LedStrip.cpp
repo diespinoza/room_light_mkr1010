@@ -8,6 +8,7 @@ LedStrip::LedStrip()
       _limited(false),
       _dirty(true),
       _lastFrame(0),
+      _refreshMs(IDLE_REFRESH_MS),
       _cur{0, 0, 0, 0},
       _fadeFrom{0, 0, 0, 0},
       _fadeTarget{0, 0, 0, 0},
@@ -87,7 +88,7 @@ bool LedStrip::update() {
     }
   }
 
-  if (!_dirty && (now - _lastFrame) < IDLE_REFRESH_MS) return false;
+  if (!_dirty && (_refreshMs == 0 || (now - _lastFrame) < _refreshMs)) return false;
   show();
   return true;
 }

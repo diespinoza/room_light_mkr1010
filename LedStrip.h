@@ -43,6 +43,10 @@ class LedStrip {
   void     setCurrentCapMa(uint16_t ma) { _capMa = ma; _dirty = true; }
   uint16_t currentCapMa() const { return _capMa; }
 
+  // Idle resend interval in ms; 0 disables it (frames only on change).
+  void     setRefreshMs(uint32_t ms) { _refreshMs = ms; }
+  uint32_t refreshMs() const { return _refreshMs; }
+
   // Diagnostics for the last frame sent.
   uint16_t estimatedMa() const { return _estMa; }
   bool     wasLimited() const { return _limited; }
@@ -63,6 +67,7 @@ class LedStrip {
   bool     _limited;
   bool     _dirty;
   uint32_t _lastFrame;
+  uint32_t _refreshMs;
 
   RGBW     _cur, _fadeFrom, _fadeTarget;
   uint32_t _fadeStart;
