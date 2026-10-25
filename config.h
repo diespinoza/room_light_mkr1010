@@ -14,7 +14,8 @@
 // The limiter estimates the strip's draw from the pixel values about to be
 // shown and scales the whole frame down if it would exceed CURRENT_CAP_MA.
 // Keep the cap below the supply rating minus what the MKR itself needs.
-#define CURRENT_CAP_MA     1500   // bench: 5 V 2 A supply, MKR on USB. Raise to 3500 with a 4 A supply
+#define CURRENT_CAP_MA     350    // bench with the 1N4007 diode: strip rail sags below 4 V above this
+                                  // and the white/blue dies shimmer. 3500 with a 4 A supply + 74AHCT125
 #define MA_PER_DIE         20     // each R, G, B or W die at full on (SK6812 class)
 #define MA_IDLE_PER_PIXEL  1      // quiescent draw of each pixel's controller
 

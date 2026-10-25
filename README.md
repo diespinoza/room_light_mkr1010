@@ -95,6 +95,20 @@ so some frames are misread. Mitigations, cheapest first:
 The sketch also resends the frame every second when idle so a corrupted static
 frame fixes itself.
 
+### If the strip shimmers at higher brightness (static colour, no data sent)
+
+Measured 2026-10-25 with the 1N4007 in the + lead and a 5 V 2 A adapter: the
+rail at the strip was 3.9 V at a 500 mA cap and 3.7 V at 1200 mA, with
+270–370 mV of ripple at 1.3–1.7 kHz. That ripple is the strip's own LED PWM
+pulling current in pulses through the diode and wiring resistance. Below
+about 4 V the blue and white dies lose regulation and their brightness
+follows the ripple, which looks like shimmer. Stable up to a 350 mA cap.
+
+Cure is voltage at the strip, not filtering: remove the diode and use a
+74AHCT125 for the data line so the strip gets the full 5 V; short, thick
+power leads; capacitor right at the JST. A Schottky diode (1N5819/1N5822,
+~0.4 V drop) is a stop-gap that roughly doubles the usable current.
+
 ### What to check in phase 1
 
 - The strip comes up soft white a few seconds after reset.
