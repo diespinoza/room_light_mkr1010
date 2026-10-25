@@ -104,3 +104,11 @@ frame fixes itself.
 - `255 255 255 255` at `bri 255` prints `current limiter ON` and `status`
   shows est ≈ cap. Measure the real current with a meter and adjust
   `MA_PER_DIE` in `config.h` if the estimate is far off.
+
+## Diagrams
+
+- `docs/wiring.svg` — bench wiring, hand-drawn.
+- `docs/fritzing/room_light_bench.fzz` — the same wiring as a Fritzing sketch
+  (breadboard view). The Arduino MKR WiFi 1010 part is bundled inside; the
+  neon strip is represented by the core library's WS2815 strip part. Expect to
+  nudge wires after opening — the file was generated, not drawn by hand.
