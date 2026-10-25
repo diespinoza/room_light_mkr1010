@@ -70,5 +70,5 @@ class LedStrip {
   bool     _fading;
 
   static uint8_t lerp8(uint8_t a, uint8_t b, uint16_t t, uint16_t span);
-  uint8_t toOutput(uint8_t v) const;
+  uint16_t toLinear(uint8_t v) const;
 };

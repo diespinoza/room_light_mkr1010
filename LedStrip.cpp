@@ -92,45 +92,50 @@ bool LedStrip::update() {
   return true;
 }
 
-uint8_t LedStrip::toOutput(uint8_t v) const {
-  uint32_t lin = (uint32_t)_gamma16[v] * _bri / 255;  // 0..65535
-  uint32_t o = (lin + 128) >> 8;
-  return (o > 255) ? 255 : (uint8_t)o;
+uint16_t LedStrip::toLinear(uint8_t v) const {
+  return (uint16_t)((uint32_t)_gamma16[v] * _bri / 255);  // 0..65535
 }
 
 void LedStrip::show() {
-  // 1. gamma (colour) then linear brightness → 8-bit output. Output values
-  //    are roughly proportional to LED current, so the estimate uses them.
-  static uint8_t out[NUM_PIXELS][4];
-  uint32_t sum = 0;
+  // 1. gamma (colour) then linear brightness → 16-bit linear light. The LED
+  //    current is proportional to this value, so the estimate uses it.
+  static uint16_t lin[NUM_PIXELS][4];
+  uint32_t sum = 0;  // max 60*4*65535 = 15.7M, fits easily
   for (uint16_t i = 0; i < NUM_PIXELS; i++) {
     const RGBW &c = _buf[i];
-    out[i][0] = toOutput(c.r);
-    out[i][1] = toOutput(c.g);
-    out[i][2] = toOutput(c.b);
-    out[i][3] = toOutput(c.w);
-    sum += out[i][0] + out[i][1] + out[i][2] + out[i][3];
+    lin[i][0] = toLinear(c.r);
+    lin[i][1] = toLinear(c.g);
+    lin[i][2] = toLinear(c.b);
+    lin[i][3] = toLinear(c.w);
+    sum += lin[i][0] + lin[i][1] + lin[i][2] + lin[i][3];
   }
 
-  // 2. estimate current and scale down if over the cap.
+  // 2. estimate current and scale down if over the cap. Scaling happens in
+  //    16 bits so consecutive clamped frames quantise to the same 8-bit
+  //    values instead of jittering by one count.
   const uint32_t idleMa = (uint32_t)NUM_PIXELS * MA_IDLE_PER_PIXEL;
-  uint32_t ledMa = sum * MA_PER_DIE / 255;
+  uint32_t ledMa = (uint32_t)((uint64_t)sum * MA_PER_DIE / 65535);
   uint32_t totalMa = idleMa + ledMa;
   _limited = false;
 
   if (totalMa > _capMa && ledMa > 0) {
     uint32_t allowedLedMa = (_capMa > idleMa) ? (_capMa - idleMa) : 0;
-    // scale factor in 1/256ths
-    uint32_t scale = allowedLedMa * 256 / ledMa;
+    uint32_t scale = (uint32_t)(((uint64_t)allowedLedMa << 16) / ledMa);  // 1/65536ths
     for (uint16_t i = 0; i < NUM_PIXELS; i++)
       for (uint8_t ch = 0; ch < 4; ch++)
-        out[i][ch] = (uint8_t)((uint32_t)out[i][ch] * scale / 256);
+        lin[i][ch] = (uint16_t)(((uint32_t)lin[i][ch] * scale) >> 16);
     totalMa = idleMa + allowedLedMa;
     _limited = true;
   }
   _estMa = (uint16_t)min(totalMa, (uint32_t)65535);
 
-  // 3. push to the strip.
+  // 3. quantise to 8 bits once, with rounding, and push to the strip.
+  static uint8_t out[NUM_PIXELS][4];
+  for (uint16_t i = 0; i < NUM_PIXELS; i++)
+    for (uint8_t ch = 0; ch < 4; ch++) {
+      uint32_t o = ((uint32_t)lin[i][ch] + 128) >> 8;
+      out[i][ch] = (o > 255) ? 255 : (uint8_t)o;
+    }
   for (uint16_t i = 0; i < NUM_PIXELS; i++)
     _px.setPixelColor(i, out[i][0], out[i][1], out[i][2], out[i][3]);
   _px.show();
