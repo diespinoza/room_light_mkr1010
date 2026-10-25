@@ -1,0 +1,173 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="620" viewBox="0 0 980 620" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <style>
+      .t  { font-size: 12px; fill: #222; }
+      .ts { font-size: 10px; fill: #444; }
+      .tt { font-size: 17px; font-weight: bold; fill: #222; }
+      .pin { font-size: 9px; fill: #fff; font-weight: bold; }
+      .w5v { stroke: #d62828; stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      .wgnd{ stroke: #111;    stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      .wdat{ stroke: #2a9d3a; stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      .wusb{ stroke: #555; stroke-width: 6; fill: none; stroke-linecap: round; stroke-dasharray: 10 6; }
+      .note{ font-size: 11px; fill: #7a4a00; }
+    </style>
+  </defs>
+  <rect width="980" height="620" fill="#fff"/>
+  <text x="20" y="30" class="tt">room_light_mkr1010 — bench wiring (phase 1)</text>
+  <text x="20" y="48" class="t">Arduino MKR WiFi 1010 → Adafruit 4689 NeoPixel RGBW neon strip (60 px, 5 V, JST SM 3-pin)</text>
+
+  <!-- ================= Power supply ================= -->
+  <g id="psu">
+    <rect x="30" y="300" width="120" height="70" rx="8" fill="#2b2b2b"/>
+    <text x="90" y="328" text-anchor="middle" font-size="12" fill="#fff" font-weight="bold">5 V DC 2 A</text>
+    <text x="90" y="346" text-anchor="middle" font-size="10" fill="#ccc">wall adapter</text>
+    <text x="90" y="360" text-anchor="middle" font-size="10" fill="#ccc">barrel plug →</text>
+    <line x1="150" y1="335" x2="200" y2="335" stroke="#2b2b2b" stroke-width="6"/>
+  </g>
+
+  <!-- Barrel jack + screw terminal -->
+  <g id="jack">
+    <rect x="200" y="310" width="60" height="50" rx="4" fill="#444"/>
+    <circle cx="214" cy="335" r="8" fill="#111"/>
+    <text x="235" y="332" font-size="9" fill="#fff" text-anchor="middle">barrel</text>
+    <text x="235" y="344" font-size="9" fill="#fff" text-anchor="middle">jack</text>
+    <!-- screw terminal block, 2 positions -->
+    <rect x="260" y="305" width="60" height="60" rx="3" fill="#2f6f3e"/>
+    <circle cx="290" cy="320" r="7" fill="#aaa"/><circle cx="290" cy="350" r="7" fill="#aaa"/>
+    <text x="330" y="323" class="t">+ (centre pin)</text>
+    <text x="330" y="353" class="t">− (sleeve)</text>
+  </g>
+
+  <!-- ================= Diode in the + lead ================= -->
+  <g id="diode">
+    <line x1="297" y1="320" x2="400" y2="320" class="w5v"/>
+    <rect x="400" y="312" width="44" height="16" rx="3" fill="#333"/>
+    <rect x="432" y="312" width="6" height="16" fill="#ddd"/>
+    <text x="422" y="302" text-anchor="middle" class="ts">1N4007</text>
+    <text x="422" y="345" text-anchor="middle" class="note">band toward strip</text>
+    <line x1="444" y1="320" x2="560" y2="320" class="w5v"/>
+  </g>
+  <!-- ground bus from terminal -->
+  <line x1="297" y1="350" x2="560" y2="350" class="wgnd"/>
+
+  <!-- ================= Capacitor on the strip side ================= -->
+  <g id="cap">
+    <line x1="500" y1="320" x2="500" y2="395" class="w5v"/>
+    <line x1="520" y1="350" x2="520" y2="395" class="wgnd"/>
+    <rect x="488" y="395" width="44" height="60" rx="6" fill="#1d3f8a"/>
+    <rect x="488" y="395" width="10" height="60" rx="3" fill="#cfd8ea"/>
+    <text x="494" y="430" font-size="12" fill="#1d3f8a" font-weight="bold">−</text>
+    <text x="510" y="478" text-anchor="middle" class="ts">1000 µF</text>
+    <text x="510" y="491" text-anchor="middle" class="ts">6.3 V+</text>
+    <text x="510" y="504" text-anchor="middle" class="note">stripe = negative</text>
+  </g>
+
+  <!-- ================= JST + strip ================= -->
+  <g id="jst">
+    <rect x="560" y="300" width="50" height="70" rx="4" fill="#eee" stroke="#999"/>
+    <text x="585" y="294" text-anchor="middle" class="ts">JST SM 3-pin</text>
+    <circle cx="585" cy="320" r="5" fill="#d62828"/>
+    <circle cx="585" cy="335" r="5" fill="#2a9d3a"/>
+    <circle cx="585" cy="350" r="5" fill="#111"/>
+    <text x="616" y="323" class="ts">red  — 5 V</text>
+    <text x="616" y="338" class="ts">mid  — DATA</text>
+    <text x="616" y="353" class="ts">black — GND</text>
+    <!-- strip -->
+    <rect x="700" y="300" width="250" height="70" rx="35" fill="#f4f4f4" stroke="#bbb" stroke-width="2"/>
+    <g fill="#ffd9a0">
+      <circle cx="730" cy="335" r="9"/><circle cx="760" cy="335" r="9"/><circle cx="790" cy="335" r="9"/>
+      <circle cx="820" cy="335" r="9"/><circle cx="850" cy="335" r="9"/><circle cx="880" cy="335" r="9"/>
+      <circle cx="910" cy="335" r="9"/>
+    </g>
+    <text x="825" y="392" text-anchor="middle" class="t">Adafruit 4689 — 60 × RGBW, pixel 0 at the JST end</text>
+    <line x1="610" y1="335" x2="700" y2="335" stroke="#bbb" stroke-width="10"/>
+  </g>
+
+  <!-- ================= MKR WiFi 1010 ================= -->
+  <g id="mkr">
+    <rect x="80" y="110" width="330" height="140" rx="8" fill="#1f8a9e"/>
+    <text x="245" y="135" text-anchor="middle" font-size="13" fill="#fff" font-weight="bold">Arduino MKR WiFi 1010</text>
+    <text x="245" y="150" text-anchor="middle" font-size="9" fill="#dff">3.3 V logic — pins are NOT 5 V tolerant</text>
+    <!-- USB -->
+    <rect x="60" y="165" width="26" height="30" rx="3" fill="#999"/>
+    <text x="73" y="183" font-size="8" text-anchor="middle" fill="#000">USB</text>
+    <!-- top header: digital side -->
+    <g>
+      <rect x="100" y="112" width="300" height="12" fill="#0d5560"/>
+      <!-- pins -->
+      <g fill="#ddd">
+        <rect x="112" y="113" width="8" height="10"/><rect x="134" y="113" width="8" height="10"/>
+        <rect x="156" y="113" width="8" height="10"/><rect x="178" y="113" width="8" height="10"/>
+        <rect x="200" y="113" width="8" height="10"/><rect x="222" y="113" width="8" height="10"/>
+        <rect x="244" y="113" width="8" height="10"/><rect x="266" y="113" width="8" height="10"/>
+        <rect x="288" y="113" width="8" height="10"/><rect x="310" y="113" width="8" height="10"/>
+        <rect x="332" y="113" width="8" height="10"/><rect x="354" y="113" width="8" height="10"/>
+        <rect x="376" y="113" width="8" height="10"/>
+      </g>
+      <g class="pin" text-anchor="middle">
+        <text x="116" y="106">AREF</text><text x="138" y="106">A0</text><text x="160" y="106">A1</text>
+        <text x="182" y="106">A2</text><text x="204" y="106">A3</text><text x="226" y="106">A4</text>
+        <text x="248" y="106">A5</text><text x="270" y="106">A6</text><text x="292" y="106">D0</text>
+        <text x="314" y="106">D1</text><text x="336" y="106">D2</text><text x="358" y="106">D3</text>
+        <text x="380" y="106">D4</text>
+      </g>
+    </g>
+    <!-- bottom header: power side -->
+    <g>
+      <rect x="100" y="236" width="300" height="12" fill="#0d5560"/>
+      <g fill="#ddd">
+        <rect x="112" y="237" width="8" height="10"/><rect x="134" y="237" width="8" height="10"/>
+        <rect x="156" y="237" width="8" height="10"/><rect x="178" y="237" width="8" height="10"/>
+        <rect x="200" y="237" width="8" height="10"/><rect x="222" y="237" width="8" height="10"/>
+        <rect x="244" y="237" width="8" height="10"/><rect x="266" y="237" width="8" height="10"/>
+        <rect x="288" y="237" width="8" height="10"/><rect x="310" y="237" width="8" height="10"/>
+        <rect x="332" y="237" width="8" height="10"/><rect x="354" y="237" width="8" height="10"/>
+        <rect x="376" y="237" width="8" height="10"/>
+      </g>
+      <g class="pin" text-anchor="middle">
+        <text x="116" y="262">D5</text><text x="138" y="262">D6</text><text x="160" y="262">D7</text>
+        <text x="182" y="262">D8</text><text x="204" y="262">D9</text><text x="226" y="262">D10</text>
+        <text x="248" y="262">D11</text><text x="270" y="262">D12</text><text x="292" y="262">D13</text>
+        <text x="314" y="262">D14</text><text x="336" y="262">RST</text><text x="358" y="262">GND</text>
+        <text x="380" y="262">VCC</text>
+      </g>
+      <text x="402" y="262" class="pin" fill="#1f8a9e"> </text>
+    </g>
+    <text x="245" y="205" text-anchor="middle" font-size="9" fill="#dff">VIN and 5V pins are not used on the bench (board powered by USB)</text>
+  </g>
+
+  <!-- USB to Pi -->
+  <path d="M60 180 C 30 180, 30 90, 60 70 L 120 70" class="wusb"/>
+  <text x="126" y="74" class="t">USB → Raspberry Pi (power + Serial Monitor 115200)</text>
+
+  <!-- ================= Data wire: D6 → resistor → JST middle ================= -->
+  <g id="data">
+    <line x1="138" y1="247" x2="138" y2="290" class="wdat"/>
+    <line x1="138" y1="290" x2="440" y2="290" class="wdat"/>
+    <!-- resistor -->
+    <rect x="440" y="282" width="56" height="16" rx="4" fill="#e9d5a8" stroke="#8a6d3b"/>
+    <rect x="450" y="282" width="5" height="16" fill="#d62828"/>
+    <rect x="460" y="282" width="5" height="16" fill="#d62828"/>
+    <rect x="470" y="282" width="5" height="16" fill="#8a5a1b"/>
+    <text x="468" y="275" text-anchor="middle" class="ts">220–470 Ω</text>
+    <line x1="496" y1="290" x2="545" y2="290" class="wdat"/>
+    <path d="M545 290 L 545 335 L 580 335" class="wdat"/>
+  </g>
+
+  <!-- ================= Ground: MKR GND → screw terminal − ================= -->
+  <path d="M358 247 L 358 275 L 230 275 L 230 390 L 290 390 L 290 357" class="wgnd"/>
+  <text x="236" y="404" class="ts">one short wire, no alligator clip — all three grounds meet at the terminal</text>
+
+  <!-- JST connections from bus -->
+  <line x1="560" y1="320" x2="580" y2="320" class="w5v"/>
+  <line x1="560" y1="350" x2="580" y2="350" class="wgnd"/>
+
+  <!-- ================= Legend / notes ================= -->
+  <g transform="translate(30 520)">
+    <line x1="0" y1="0" x2="30" y2="0" class="w5v"/><text x="38" y="4" class="t">5 V (after diode ≈ 4.3 V at the strip)</text>
+    <line x1="0" y1="18" x2="30" y2="18" class="wgnd"/><text x="38" y="22" class="t">GND — supply −, strip black, MKR GND, all one point</text>
+    <line x1="0" y1="36" x2="30" y2="36" class="wdat"/><text x="38" y="40" class="t">DATA — MKR D6 → resistor → JST middle wire</text>
+    <text x="0" y="62" class="note">Power off before changing any wire. Connect GND first, then 5 V, then DATA.</text>
+    <text x="0" y="78" class="note">Final build: replace the diode with a 74AHCT125 level shifter (5 V) between D6 and DATA, and use a 5 V 4 A supply with CURRENT_CAP_MA = 3500.</text>
+  </g>
+</svg>
