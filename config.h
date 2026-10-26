@@ -28,3 +28,9 @@
 
 // ---- Serial ---------------------------------------------------------------
 #define SERIAL_BAUD        115200
+
+// ---- Network ------------------------------------------------------------
+#define WIFI_HOSTNAME      "roomlight"  // shows in the router's client list
+#define WIFI_RETRY_MS      10000        // wait between connection attempts
+#define HTTP_PORT          80
+#define HTTP_CLIENT_TIMEOUT_MS 300      // max time spent reading one request

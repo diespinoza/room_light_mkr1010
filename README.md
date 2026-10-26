@@ -3,10 +3,33 @@
 WiFi room light: Arduino MKR WiFi 1010 driving an Adafruit 4689 NeoPixel RGBW
 neon strip (60 px, 5 V, 5500K). See `PLAN.md` for the full design.
 
-## Current state: phase 1 — bench test
+## Current state: phase 2 — WiFi web page
 
-The sketch drives the strip and takes colour commands over USB serial. No WiFi
-yet.
+The sketch joins the home WiFi and serves a phone page at `http://<ip>/` with
+on/off, brightness, colour, white and presets. The serial shell still works.
+
+### Setup for phase 2
+
+1. Library Manager: install **WiFiNINA** by Arduino (not BetterWiFiNINA).
+   Compiled against 1.9.1.
+2. Tools → WiFi101 / WiFiNINA Firmware Updater: update the NINA module once.
+3. Copy `secrets.example.h` to `secrets.h` and fill in your SSID and password.
+   `secrets.h` is git-ignored.
+4. Upload. The Serial Monitor prints the IP once connected; `wifi` prints it
+   again. Give the MKR a DHCP reservation on the router so the IP stays put,
+   and add the page to the phone's home screen.
+
+### API
+
+| Call | Body / result |
+|---|---|
+| `GET /api/state` | `{"on":true,"r":255,"g":120,"b":20,"w":180,"bri":200,"est_ma":410,"cap_ma":350,"limited":false,"version":12}` |
+| `POST /api/state` | any subset of `on`, `r`, `g`, `b`, `w`, `bri`; or `{"preset":"warm"}`. Returns the new state |
+| `GET /api/presets` | `["warm","cool","reading","night","sunset","ocean"]` |
+
+Example from a laptop: `curl -X POST http://roomlight-ip/api/state -d '{"bri":80,"preset":"night"}'`
+
+Not yet: saved state across power cycles, mDNS name, effects (phase 3).
 
 ### Wiring for the bench
 
@@ -43,7 +66,9 @@ operating system".
 |---|---|
 | `255 80 0 0` | colour as `r g b w`, fades in |
 | `white 200` | white die only |
-| `off` | fade to dark |
+| `on` / `off` | switch, keeping the colour |
+| `preset night` | warm, cool, reading, night, sunset, ocean |
+| `wifi` | connection status and IP |
 | `bri 64` | master brightness 0..255 |
 | `fade 1000` | fade time in ms, `fade 0` for instant |
 | `cap 2000` | current cap in mA for this session |
