@@ -1,43 +1,82 @@
 #include "Network.h"
-#include "config.h"
+#include <utility/wifi_drv.h>
+
+static const char *statusName(uint8_t s) {
+  switch (s) {
+    case WL_IDLE_STATUS:     return "idle";
+    case WL_NO_SSID_AVAIL:   return "no SSID";
+    case WL_SCAN_COMPLETED:  return "scan done";
+    case WL_CONNECTED:       return "connected";
+    case WL_CONNECT_FAILED:  return "connect failed";
+    case WL_CONNECTION_LOST: return "connection lost";
+    case WL_DISCONNECTED:    return "disconnected";
+    case WL_NO_MODULE:       return "no module";
+    default:                 return "?";
+  }
+}
 
 void Network::begin(const char *ssid, const char *pass, const char *hostname) {
   _ssid = ssid; _pass = pass; _hostname = hostname;
   if (WiFi.status() == WL_NO_MODULE) {
-    _moduleOk = false;
+    _state = NO_MODULE;
     Serial.println(F("WiFi: NINA module not responding"));
     return;
   }
   String fv = WiFi.firmwareVersion();
   Serial.print(F("WiFi: NINA firmware ")); Serial.print(fv);
   if (fv < WIFI_FIRMWARE_LATEST_VERSION) {
-    Serial.print(F(" (updater has ")); Serial.print(WIFI_FIRMWARE_LATEST_VERSION); Serial.print(F(")"));
+    Serial.print(F(" (library expects ")); Serial.print(WIFI_FIRMWARE_LATEST_VERSION); Serial.print(F(")"));
   }
   Serial.println();
   WiFi.setHostname(_hostname);
   _led.begin();
-  _led.setMode(StatusLed::CONNECTING);
-  _lastAttempt = millis() - WIFI_RETRY_MS;   // connect on the first update()
+  _state = IDLE;
+  _nextAttempt = millis();
 }
 
-void Network::tryConnect() {
+void Network::startAttempt() {
+  if (_failStreak >= WIFI_MODULE_RESET_AFTER) resetModule();
   _attempts++;
   Serial.print(F("WiFi: connecting to ")); Serial.print(_ssid);
   Serial.print(F(" (attempt ")); Serial.print(_attempts); Serial.println(F(")"));
-  // WiFi.begin blocks for a few seconds; the strip simply holds its colour.
   _led.setMode(StatusLed::CONNECTING);
-  int st = WiFi.begin(_ssid, _pass);
-  _lastAttempt = millis();
-  if (st == WL_CONNECTED) {
-    _connected = true;
-    Serial.print(F("WiFi: connected, IP ")); Serial.println(WiFi.localIP());
-    Serial.print(F("WiFi: open http://")); Serial.print(WiFi.localIP()); Serial.println(F("/"));
-    startMdns();
-    _led.setMode(StatusLed::CONNECTED);
-  } else {
-    Serial.print(F("WiFi: failed, status ")); Serial.println(st);
-    _led.setMode(StatusLed::LOST);
-  }
+  // Same call WiFi.begin() makes, minus its blocking poll loop.
+  int8_t r = WiFiDrv::wifiSetPassphrase(_ssid, strlen(_ssid), _pass, strlen(_pass));
+  _attemptStart = millis();
+  _lastPoll = 0;
+  if (r == WL_FAILURE) { onFailed(WL_CONNECT_FAILED); return; }
+  _state = CONNECTING;
+}
+
+void Network::onConnected() {
+  _state = CONNECTED;
+  _failStreak = 0;
+  _connects++;
+  Serial.print(F("WiFi: connected, IP ")); Serial.print(WiFi.localIP());
+  Serial.print(F("  http://")); Serial.print(WiFi.localIP()); Serial.println(F("/"));
+  _led.setMode(StatusLed::CONNECTED);
+  startMdns();
+}
+
+void Network::onFailed(uint8_t status) {
+  _state = FAILED;
+  _failStreak++;
+  _nextAttempt = millis() + WIFI_RETRY_MS;
+  Serial.print(F("WiFi: attempt failed (")); Serial.print(statusName(status));
+  Serial.print(F("), retry in ")); Serial.print(WIFI_RETRY_MS / 1000); Serial.println(F(" s"));
+  _led.setMode(StatusLed::LOST);
+}
+
+void Network::resetModule() {
+  _moduleResets++;
+  _failStreak = 0;
+  Serial.println(F("WiFi: resetting the NINA module"));
+  WiFi.end();                  // holds the module in reset
+  delay(100);
+  // The next library call re-initialises the SPI link and releases reset
+  // (about 750 ms, blocking). Re-apply settings that live on the module.
+  WiFi.setHostname(_hostname);
+  _led.begin();
 }
 
 void Network::startMdns() {
@@ -53,26 +92,62 @@ void Network::startMdns() {
 }
 
 void Network::update() {
-  if (!_moduleOk || !_ssid) return;
-#if USE_MDNS
-  if (_connected) _mdns.run();
-#endif
-  bool now = (WiFi.status() == WL_CONNECTED);
-  if (_connected && !now) {
-    _connected = false;
-    Serial.println(F("WiFi: connection lost"));
-    _led.setMode(StatusLed::LOST);
-  }
+  if (_state == NO_MODULE || !_ssid) return;
   _led.update();
-  if (!now && (millis() - _lastAttempt) >= WIFI_RETRY_MS) tryConnect();
+  uint32_t now = millis();
+
+  switch (_state) {
+    case IDLE:
+    case FAILED:
+      if ((int32_t)(now - _nextAttempt) >= 0) startAttempt();
+      break;
+
+    case CONNECTING: {
+      if (now - _lastPoll < 250) break;          // one SPI query per 250 ms
+      _lastPoll = now;
+      uint8_t st = WiFi.status();
+      _lastStatus = st;
+      if (st == WL_CONNECTED) { onConnected(); break; }
+      bool stillTrying = (st == WL_IDLE_STATUS || st == WL_NO_SSID_AVAIL || st == WL_SCAN_COMPLETED);
+      if (!stillTrying || (now - _attemptStart) > WIFI_CONNECT_TIMEOUT_MS) onFailed(st);
+      break;
+    }
+
+    case CONNECTED:
+#if USE_MDNS
+      _mdns.run();
+#endif
+      if (now - _lastPoll >= WIFI_STATUS_POLL_MS) {
+        _lastPoll = now;
+        uint8_t st = WiFi.status();
+        _lastStatus = st;
+        if (st != WL_CONNECTED) {
+          _drops++;
+          Serial.print(F("WiFi: connection lost (")); Serial.print(statusName(st)); Serial.println(F(")"));
+          _state = FAILED;
+          _nextAttempt = now;                      // retry straight away
+          _led.setMode(StatusLed::LOST);
+        }
+      }
+      break;
+
+    default: break;
+  }
 }
 
 void Network::printStatus(Stream &out) const {
-  if (!_moduleOk) { out.println(F("wifi: no module")); return; }
-  out.print(F("wifi: ")); out.print(_connected ? F("connected") : F("disconnected"));
-  if (_connected) {
+  static const char *const NAMES[] = {"idle", "connecting", "connected", "failed, waiting to retry", "no module"};
+  out.print(F("wifi: ")); out.print(NAMES[_state]);
+  if (_state == CONNECTED) {
     out.print(F("  ip=")); out.print(WiFi.localIP());
     out.print(F("  rssi=")); out.print(WiFi.RSSI()); out.print(F(" dBm"));
+  } else {
+    out.print(F("  last status=")); out.print(statusName(_lastStatus));
   }
-  out.print(F("  attempts=")); out.println(_attempts);
+  out.println();
+  out.print(F("      attempts=")); out.print(_attempts);
+  out.print(F("  connects=")); out.print(_connects);
+  out.print(F("  drops=")); out.print(_drops);
+  out.print(F("  module resets=")); out.print(_moduleResets);
+  out.print(F("  uptime=")); out.print(millis() / 1000); out.println(F(" s"));
 }

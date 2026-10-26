@@ -46,3 +46,9 @@
 // not usable. The WiFi module's RGB LED is driven over SPI instead.
 #define STATUS_LED_LEVEL   24           // 0..255 brightness of the status colours
 #define STATUS_LED_OK_MS   3000         // green this long after connecting, then off
+
+// ---- Reliability -----------------------------------------------------------
+#define WIFI_CONNECT_TIMEOUT_MS 15000   // give up on one attempt after this
+#define WIFI_STATUS_POLL_MS     1000    // how often to ask the module "still connected?"
+#define WIFI_MODULE_RESET_AFTER 3       // consecutive failed attempts before resetting the NINA
+#define WATCHDOG_ENABLED        1       // hardware reset if the loop stalls > ~16 s

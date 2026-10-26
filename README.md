@@ -38,6 +38,39 @@ and restored at power-up. The serial shell still works.
 Picking a colour or preset returns to static. Effects use the current
 colour (breathe, candle, twinkle) or ignore it (cycle, rainbow).
 
+### Reliability
+
+Three things keep the light running unattended:
+
+- **Non-blocking connect.** The library's `WiFi.begin()` blocks for up to
+  10 s; the sketch sends the connect request and polls instead, so effects
+  keep running and the status LED keeps blinking during (re)connects.
+- **Module reset.** After `WIFI_MODULE_RESET_AFTER` (3) failed attempts in a
+  row the NINA module is reset through its reset pin. This clears the state
+  where the module answers but never connects (seen as hundreds of failed
+  retries). `wifireset` does it on demand.
+- **Hardware watchdog.** If the main loop stalls for ~16 s, which is what a
+  wedged SPI link to the module looks like, the SAMD21 resets itself, the
+  saved state is restored from flash and the light is back within a second.
+  The boot banner prints the reset cause, so `watchdog` there means it fired.
+
+`wifi` in the serial shell prints attempt, connect, drop and module-reset
+counters plus uptime.
+
+**NINA firmware.** The installed WiFiNINA library (2.1.1) expects module
+firmware 3.0.1; the boot banner shows what the module runs. A mismatch is a
+plausible cause of hangs. To update from this Pi (the Debian IDE has no
+updater menu), download Arduino's `arduino-fwuploader` Linux ARM64 build
+from https://github.com/arduino/arduino-fwuploader/releases, unpack it, then
+with the MKR on USB and the Serial Monitor closed:
+
+```
+./arduino-fwuploader firmware flash -b arduino:samd:mkrwifi1010 -a /dev/ttyACM0
+```
+
+It uploads a helper sketch, flashes the module, and leaves the MKR needing
+the project uploaded again.
+
 ### Status LED (on the WiFi module)
 
 The MKR's orange LED is on pin 6, the strip's data pin, so it just flickers
@@ -105,7 +138,9 @@ operating system".
 | `effect candle` | static, breathe, cycle, rainbow, candle, twinkle |
 | `speed 30` | effect speed 1..100 |
 | `save` | write state to flash now |
-| `wifi` | connection status and IP |
+| `wifi` | connection status, IP, counters, uptime |
+| `wifireset` | hard-reset the WiFi module |
+| `reboot` | software reset |
 | `bri 64` | master brightness 0..255 |
 | `fade 1000` | fade time in ms, `fade 0` for instant |
 | `cap 2000` | current cap in mA for this session |

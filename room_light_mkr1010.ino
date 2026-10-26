@@ -19,7 +19,9 @@
 //   pix I r g b w    one pixel, immediate (for finding the data direction)
 //   test             step through R, G, B, W, all, off — 1 s each
 //   pintest          hold the data pin HIGH for 10 s for a multimeter
-//   wifi             connection status, IP, signal
+//   wifi             connection status, IP, signal, attempt/drop counters
+//   wifireset        hard-reset the WiFi module and reconnect
+//   reboot           software reset of the board
 //   status           colour, brightness, estimated mA, limiter state
 //   help
 
@@ -31,6 +33,7 @@
 #include "WebUI.h"
 #include "Effects.h"
 #include "Persist.h"
+#include "Watchdog.h"
 
 LedStrip   strip;
 LightState light(strip);
@@ -70,7 +73,9 @@ void printHelp() {
   Serial.println(F("  pix I r g b w  one pixel, immediate"));
   Serial.println(F("  test           R, G, B, W, all, off"));
   Serial.println(F("  pintest        data pin HIGH for 10 s (meter: ~3.3 V)"));
-  Serial.println(F("  wifi           connection status"));
+  Serial.println(F("  wifi           connection status and counters"));
+  Serial.println(F("  wifireset      hard-reset the WiFi module"));
+  Serial.println(F("  reboot         software reset"));
   Serial.println(F("  status"));
 }
 
@@ -155,6 +160,13 @@ void handleLine(char *s) {
   } else if (!strcmp(tok[0], "wifi")) {
     net.printStatus(Serial);
     return;
+  } else if (!strcmp(tok[0], "wifireset")) {
+    net.resetModule();
+  } else if (!strcmp(tok[0], "reboot")) {
+    Serial.println(F("rebooting"));
+    Serial.flush();
+    delay(50);
+    NVIC_SystemReset();
   } else if (!strcmp(tok[0], "status")) {
     printStatus();
     return;
@@ -229,13 +241,21 @@ void setup() {
   Serial.print(F(" pin=")); Serial.print(LED_PIN);
   Serial.print(F(" cap=")); Serial.print(CURRENT_CAP_MA); Serial.println(F("mA"));
   Serial.println(restored ? F("state: restored from flash") : F("state: defaults (nothing saved yet)"));
+  Serial.print(F("reset cause: ")); Serial.println(Watchdog::resetCause());
 
+#if WATCHDOG_ENABLED
+  Watchdog::begin();
+  WiFi.setFeedWatchdogFunc(Watchdog::feed);   // the library feeds us during its own waits
+#endif
   net.begin(WIFI_SSID, WIFI_PASSWORD, WIFI_HOSTNAME);
   printHelp();
   printStatus();
 }
 
 void loop() {
+#if WATCHDOG_ENABLED
+  Watchdog::feed();
+#endif
   pollSerial();
   runPinTest();
   if (pinTestUntil) return;    // leave the pin alone while the meter test runs
