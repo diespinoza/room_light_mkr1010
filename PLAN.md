@@ -151,7 +151,7 @@ Recommendation: A, then E, then B. C only if you prefer a ready-made app.
 | 0 Setup | IDE uploads to the MKR; NINA firmware current; libraries installed; JST pinout verified | Blink runs; `ScanNetworks` example lists your SSID |
 | 1 Light | Strip wired on the bench; `LedStrip` module with gamma + current cap; serial commands set colour | Typing `255 0 0 0` in Serial Monitor turns the strip red; 2 % brightness is smooth, not flickery; no glitches with the data line as built |
 | 2 WiFi UI | Web page: on/off, brightness, colour picker, white slider, 4 presets | Phone on WiFi changes the light; survives router reboot (auto-reconnect) |
-| 3 Polish | Effects, saved last state, mDNS name, perfboard build, enclosure, mounting | Power-cycle restores last colour; `http://roomlight.local` resolves |
+| 3 Polish | Effects, saved last state, mDNS name, perfboard build (see docs/perfboard.md), enclosure, mounting | Power-cycle restores last colour; `http://roomlight.local` resolves |
 | 4 Extras | Button/encoder; MQTT + Home Assistant discovery; OTA upload over WiFi | "Hey Google, lights 30 %" works (if HA used) |
 
 ## 7. Software to install (Arduino IDE 1.8.19)
