@@ -40,3 +40,9 @@
 #define MDNS_SERVICE_NAME  "Room light._http"
 #define SAVE_DELAY_MS      3000         // write state to flash this long after the last change
 #define DEFAULT_SPEED      50           // effect speed 1..100
+
+// ---- Status LED (RGB LED on the NINA WiFi module) --------------------------
+// The MKR's own orange LED is on pin 6, shared with the strip data, so it is
+// not usable. The WiFi module's RGB LED is driven over SPI instead.
+#define STATUS_LED_LEVEL   24           // 0..255 brightness of the status colours
+#define STATUS_LED_OK_MS   3000         // green this long after connecting, then off

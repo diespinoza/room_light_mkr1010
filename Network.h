@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <WiFiNINA.h>
 #include "config.h"
+#include "StatusLed.h"
 #if USE_MDNS
 #include <WiFiUdp.h>
 #include <ArduinoMDNS.h>
@@ -16,8 +17,10 @@ class Network {
   bool connected() const { return _connected; }
   IPAddress ip() const { return WiFi.localIP(); }
   void printStatus(Stream &out) const;
+  StatusLed &led() { return _led; }
 
  private:
+  StatusLed _led;
   void tryConnect();
   void startMdns();
 #if USE_MDNS

@@ -15,6 +15,8 @@ void Network::begin(const char *ssid, const char *pass, const char *hostname) {
   }
   Serial.println();
   WiFi.setHostname(_hostname);
+  _led.begin();
+  _led.setMode(StatusLed::CONNECTING);
   _lastAttempt = millis() - WIFI_RETRY_MS;   // connect on the first update()
 }
 
@@ -23,6 +25,7 @@ void Network::tryConnect() {
   Serial.print(F("WiFi: connecting to ")); Serial.print(_ssid);
   Serial.print(F(" (attempt ")); Serial.print(_attempts); Serial.println(F(")"));
   // WiFi.begin blocks for a few seconds; the strip simply holds its colour.
+  _led.setMode(StatusLed::CONNECTING);
   int st = WiFi.begin(_ssid, _pass);
   _lastAttempt = millis();
   if (st == WL_CONNECTED) {
@@ -30,8 +33,10 @@ void Network::tryConnect() {
     Serial.print(F("WiFi: connected, IP ")); Serial.println(WiFi.localIP());
     Serial.print(F("WiFi: open http://")); Serial.print(WiFi.localIP()); Serial.println(F("/"));
     startMdns();
+    _led.setMode(StatusLed::CONNECTED);
   } else {
     Serial.print(F("WiFi: failed, status ")); Serial.println(st);
+    _led.setMode(StatusLed::LOST);
   }
 }
 
@@ -56,7 +61,9 @@ void Network::update() {
   if (_connected && !now) {
     _connected = false;
     Serial.println(F("WiFi: connection lost"));
+    _led.setMode(StatusLed::LOST);
   }
+  _led.update();
   if (!now && (millis() - _lastAttempt) >= WIFI_RETRY_MS) tryConnect();
 }
 

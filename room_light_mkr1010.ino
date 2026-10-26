@@ -215,7 +215,8 @@ void setup() {
   strip.setBrightness(light.brightness());
   strip.fill(light.color());   // soft white default
   bool restored = persist.begin();   // overrides with the last saved state
-  strip.show();
+  effects.update();            // a saved effect draws its first frame now,
+  strip.show();                // not after the (blocking) WiFi connect
   delay(5);
   strip.show();                // twice, in case the first frame was garbled
 
@@ -240,20 +241,21 @@ void loop() {
   if (pinTestUntil) return;    // leave the pin alone while the meter test runs
   runTest();
 
-  net.update();
-  if (net.connected()) {
-    web.begin();               // idempotent; starts listening once connected
-    web.handle();
-  }
-
+  // Render first: WiFi.begin() blocks for seconds during a (re)connect, and
+  // the strip should already show the right thing when that happens.
   effects.update();
   persist.update();
-
   if (strip.update()) {
     static bool wasLimited = false;
     if (strip.wasLimited() != wasLimited) {
       wasLimited = strip.wasLimited();
       Serial.println(wasLimited ? F("current limiter ON") : F("current limiter off"));
     }
+  }
+
+  net.update();
+  if (net.connected()) {
+    web.begin();               // idempotent; starts listening once connected
+    web.handle();
   }
 }

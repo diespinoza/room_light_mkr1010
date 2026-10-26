@@ -38,6 +38,13 @@ and restored at power-up. The serial shell still works.
 Picking a colour or preset returns to static. Effects use the current
 colour (breathe, candle, twinkle) or ignore it (cycle, rainbow).
 
+### Status LED (on the WiFi module)
+
+The MKR's orange LED is on pin 6, the strip's data pin, so it just flickers
+with data. The RGB LED on the NINA module shows WiFi state instead:
+blue blinking = connecting or retrying, green for 3 s = connected, solid red
+= connection lost. Brightness is `STATUS_LED_LEVEL` in `config.h`.
+
 ### Saved state
 
 On, colour, brightness, effect and speed are written to flash 3 s after the
