@@ -104,6 +104,17 @@ pulling current in pulses through the diode and wiring resistance. Below
 about 4 V the blue and white dies lose regulation and their brightness
 follows the ripple, which looks like shimmer. Stable up to a 350 mA cap.
 
+Where the volts went (measured 2026-10-25, full white, cap 800, common GND
+at the breadboard rail):
+
+| Point | Volts | Drop | Cause |
+|---|---|---|---|
+| adapter at screw terminal | ~5.0 | | |
+| after first jumper, before diode | ~4.7 | 0.3 | bad jumper/contact — strip flickers when it is wiggled |
+| after 1N4007 | ~3.7 | 1.0 | diode (high; breadboard contacts add to it) |
+| strip red wire at JST | ~3.6 | 0.1 | jumper + JST, acceptable |
+| ground path, strip GND to MKR GND | | 0.04 | fine |
+
 Cure is voltage at the strip, not filtering: remove the diode and use a
 74AHCT125 for the data line so the strip gets the full 5 V; short, thick
 power leads; capacitor right at the JST. A Schottky diode (1N5819/1N5822,
