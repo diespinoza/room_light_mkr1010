@@ -29,13 +29,29 @@ void Network::tryConnect() {
     _connected = true;
     Serial.print(F("WiFi: connected, IP ")); Serial.println(WiFi.localIP());
     Serial.print(F("WiFi: open http://")); Serial.print(WiFi.localIP()); Serial.println(F("/"));
+    startMdns();
   } else {
     Serial.print(F("WiFi: failed, status ")); Serial.println(st);
   }
 }
 
+void Network::startMdns() {
+#if USE_MDNS
+  _mdns.removeAllServiceRecords();
+  if (_mdns.begin(WiFi.localIP(), _hostname)) {
+    _mdns.addServiceRecord(MDNS_SERVICE_NAME, HTTP_PORT, MDNSServiceTCP);
+    Serial.print(F("mDNS: http://")); Serial.print(_hostname); Serial.println(F(".local/"));
+  } else {
+    Serial.println(F("mDNS: failed to start"));
+  }
+#endif
+}
+
 void Network::update() {
   if (!_moduleOk || !_ssid) return;
+#if USE_MDNS
+  if (_connected) _mdns.run();
+#endif
   bool now = (WiFi.status() == WL_CONNECTED);
   if (_connected && !now) {
     _connected = false;

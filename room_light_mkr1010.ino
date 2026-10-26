@@ -1,4 +1,4 @@
-// room_light_mkr1010.ino — Phase 2: WiFi web page + serial shell
+// room_light_mkr1010.ino — Phase 3: WiFi web page, effects, saved state, mDNS
 //
 // Drives the Adafruit 4689 NeoPixel RGBW neon strip from an Arduino MKR WiFi
 // 1010. Control from a phone at http://<ip>/ on the home WiFi, or from the
@@ -9,6 +9,9 @@
 //   white N          white die only, 0..255
 //   on / off         switch, keeping the colour
 //   preset NAME      warm, cool, reading, night, sunset, ocean
+//   effect NAME      static, breathe, cycle, rainbow, candle, twinkle
+//   speed N          effect speed 1..100
+//   save             write the state to flash now (normally automatic)
 //   bri N            master brightness 0..255
 //   fade MS          fade time in ms (0 = instant)
 //   cap MA           current cap in mA (default from config.h)
@@ -26,11 +29,15 @@
 #include "LightState.h"
 #include "Network.h"
 #include "WebUI.h"
+#include "Effects.h"
+#include "Persist.h"
 
 LedStrip   strip;
 LightState light(strip);
 Network    net;
 WebUI      web(light);
+Effects    effects(strip, light);
+Persist    persist(light);
 
 // ---- Self-test sequence (non-blocking) -------------------------------------
 const RGBW TEST_STEPS[] = {
@@ -53,6 +60,9 @@ void printHelp() {
   Serial.println(F("  white N        white die only"));
   Serial.println(F("  on | off"));
   Serial.println(F("  preset NAME    warm cool reading night sunset ocean"));
+  Serial.println(F("  effect NAME    static breathe cycle rainbow candle twinkle"));
+  Serial.println(F("  speed N        effect speed 1..100"));
+  Serial.println(F("  save           write state to flash now"));
   Serial.println(F("  bri N          master brightness 0..255"));
   Serial.println(F("  fade MS        fade time (0 = instant)"));
   Serial.println(F("  cap MA         current cap in mA"));
@@ -71,6 +81,8 @@ void printStatus() {
   Serial.print(F(" g="));        Serial.print(c.g);
   Serial.print(F(" b="));        Serial.print(c.b);
   Serial.print(F(" w="));        Serial.print(c.w);
+  Serial.print(F("  effect="));  Serial.print(light.effectName());
+  Serial.print(F("/"));          Serial.print(light.speed());
   Serial.print(F("  bri="));     Serial.print(light.brightness());
   Serial.print(F("  fade="));    Serial.print(light.fadeMs()); Serial.print(F("ms"));
   Serial.print(F("  est="));     Serial.print(strip.estimatedMa()); Serial.print(F("mA"));
@@ -109,6 +121,14 @@ void handleLine(char *s) {
   } else if (!strcmp(tok[0], "preset") && n == 2) {
     stopTests();
     if (!light.applyPreset(tok[1])) { Serial.println(F("? unknown preset")); return; }
+  } else if (!strcmp(tok[0], "effect") && n == 2) {
+    stopTests();
+    if (!light.setEffectByName(tok[1])) { Serial.println(F("? unknown effect")); return; }
+  } else if (!strcmp(tok[0], "speed") && n == 2) {
+    light.setSpeed((uint8_t)constrain(atol(tok[1]), 1L, 100L));
+  } else if (!strcmp(tok[0], "save")) {
+    persist.saveNow();
+    Serial.print(F("saved (")); Serial.print(persist.saves()); Serial.println(F(" writes this boot)"));
   } else if (!strcmp(tok[0], "bri") && n == 2) {
     light.setBrightness(clamp255(atol(tok[1])));
   } else if (!strcmp(tok[0], "fade") && n == 2) {
@@ -193,7 +213,8 @@ void setup() {
   // random colours until it receives a frame.
   strip.begin();
   strip.setBrightness(light.brightness());
-  strip.fill(light.color());   // soft white at boot so you can see it is alive
+  strip.fill(light.color());   // soft white default
+  bool restored = persist.begin();   // overrides with the last saved state
   strip.show();
   delay(5);
   strip.show();                // twice, in case the first frame was garbled
@@ -206,6 +227,7 @@ void setup() {
   Serial.print(F("pixels=")); Serial.print(NUM_PIXELS);
   Serial.print(F(" pin=")); Serial.print(LED_PIN);
   Serial.print(F(" cap=")); Serial.print(CURRENT_CAP_MA); Serial.println(F("mA"));
+  Serial.println(restored ? F("state: restored from flash") : F("state: defaults (nothing saved yet)"));
 
   net.begin(WIFI_SSID, WIFI_PASSWORD, WIFI_HOSTNAME);
   printHelp();
@@ -223,6 +245,9 @@ void loop() {
     web.begin();               // idempotent; starts listening once connected
     web.handle();
   }
+
+  effects.update();
+  persist.update();
 
   if (strip.update()) {
     static bool wasLimited = false;

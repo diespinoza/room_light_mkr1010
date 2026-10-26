@@ -3,33 +3,60 @@
 WiFi room light: Arduino MKR WiFi 1010 driving an Adafruit 4689 NeoPixel RGBW
 neon strip (60 px, 5 V, 5500K). See `PLAN.md` for the full design.
 
-## Current state: phase 2 — WiFi web page
+## Current state: phase 3 — effects, saved state, roomlight.local
 
-The sketch joins the home WiFi and serves a phone page at `http://<ip>/` with
-on/off, brightness, colour, white and presets. The serial shell still works.
+The sketch joins the home WiFi and serves a phone page at
+`http://roomlight.local/` (or `http://<ip>/`) with on/off, brightness,
+colour, white, presets, effects and speed. The last state is saved to flash
+and restored at power-up. The serial shell still works.
 
-### Setup for phase 2
+### Setup
 
-1. Library Manager: install **WiFiNINA** by Arduino (not BetterWiFiNINA).
-   Compiled against 1.9.1.
-2. Tools → WiFi101 / WiFiNINA Firmware Updater: update the NINA module once.
+1. Library Manager: install **WiFiNINA** by Arduino (not BetterWiFiNINA),
+   **FlashStorage** by Arduino/cmaglie, and **ArduinoMDNS** by Arduino.
+   If you skip ArduinoMDNS, set `USE_MDNS` to 0 in `config.h`.
+2. NINA firmware: the Debian IDE package has no updater menu. Not needed for
+   local HTTP. If ever required, use Arduino's `arduino-fwuploader` CLI
+   (Linux ARM64 build on its GitHub releases).
 3. Copy `secrets.example.h` to `secrets.h` and fill in your SSID and password.
    `secrets.h` is git-ignored.
 4. Upload. The Serial Monitor prints the IP once connected; `wifi` prints it
-   again. Give the MKR a DHCP reservation on the router so the IP stays put,
-   and add the page to the phone's home screen.
+   again. A DHCP reservation on the router keeps the IP stable as a fallback
+   to the `.local` name (Android phones sometimes ignore mDNS).
+
+### Effects
+
+| Name | What it does | Speed 50 means |
+|---|---|---|
+| static | holds the colour | |
+| breathe | colour swells and fades | one breath per 4 s |
+| cycle | whole strip drifts through the spectrum | full cycle in 20 s |
+| rainbow | spectrum along the strip, rotating | one rotation per 10 s |
+| candle | warm flicker, every pixel on its own | |
+| twinkle | dim base colour with random white sparks | |
+
+Picking a colour or preset returns to static. Effects use the current
+colour (breathe, candle, twinkle) or ignore it (cycle, rainbow).
+
+### Saved state
+
+On, colour, brightness, effect and speed are written to flash 3 s after the
+last change (`SAVE_DELAY_MS`), so dragging a slider costs one write. SAMD
+flash is good for roughly 10 000 erase cycles per row; at a few saves a day
+that is decades. `save` in the serial shell forces a write.
 
 ### API
 
 | Call | Body / result |
 |---|---|
 | `GET /api/state` | `{"on":true,"r":255,"g":120,"b":20,"w":180,"bri":200,"est_ma":410,"cap_ma":350,"limited":false,"version":12}` |
-| `POST /api/state` | any subset of `on`, `r`, `g`, `b`, `w`, `bri`; or `{"preset":"warm"}`. Returns the new state |
+| `POST /api/state` | any subset of `on`, `r`, `g`, `b`, `w`, `bri`, `speed`, `effect` (name); or `{"preset":"warm"}`. Returns the new state |
 | `GET /api/presets` | `["warm","cool","reading","night","sunset","ocean"]` |
+| `GET /api/effects` | `["static","breathe","cycle","rainbow","candle","twinkle"]` |
 
 Example from a laptop: `curl -X POST http://roomlight-ip/api/state -d '{"bri":80,"preset":"night"}'`
 
-Not yet: saved state across power cycles, mDNS name, effects (phase 3).
+Not yet: Home Assistant/MQTT, physical button, OTA updates (phase 4).
 
 ### Wiring for the bench
 
@@ -68,6 +95,9 @@ operating system".
 | `white 200` | white die only |
 | `on` / `off` | switch, keeping the colour |
 | `preset night` | warm, cool, reading, night, sunset, ocean |
+| `effect candle` | static, breathe, cycle, rainbow, candle, twinkle |
+| `speed 30` | effect speed 1..100 |
+| `save` | write state to flash now |
 | `wifi` | connection status and IP |
 | `bri 64` | master brightness 0..255 |
 | `fade 1000` | fade time in ms, `fade 0` for instant |

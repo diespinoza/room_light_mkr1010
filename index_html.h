@@ -23,7 +23,7 @@ input[type=color]{width:100%;height:48px;border:0;background:none;padding:0}
 .sw input:checked+span:before{transform:translateX(24px)}
 .presets{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 .presets button{padding:12px 0;border:0;border-radius:10px;background:#2c2c36;color:#eee;font-size:14px;text-transform:capitalize}
-.presets button:active{background:#f5c05a;color:#000}
+.presets button:active,.presets button.on{background:#f5c05a;color:#000}
 #info{font-size:12px;color:#888;text-align:center}
 .off main{opacity:.55}
 </style></head><body><main>
@@ -32,6 +32,8 @@ input[type=color]{width:100%;height:48px;border:0;background:none;padding:0}
 <div class="card"><label>Colour</label><input type="color" id="col">
 <label style="margin-top:12px">White</label><input type="range" id="w" min="0" max="255"></div>
 <div class="card"><label>Presets</label><div class="presets" id="presets"></div></div>
+<div class="card"><label>Effect</label><div class="presets" id="effects"></div>
+<label style="margin-top:12px">Speed</label><input type="range" id="speed" min="1" max="100"></div>
 <div id="info">connecting…</div>
 </main>
 <script>
@@ -40,7 +42,8 @@ let s={},timer;
 const hex=(r,g,b)=>'#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
 function render(){
   $('on').checked=s.on;$('bri').value=s.bri;$('w').value=s.w;$('col').value=hex(s.r,s.g,s.b);
-  document.body.classList.toggle('off',!s.on);
+  document.body.classList.toggle('off',!s.on);$('speed').value=s.speed;
+  for(const b of $('effects').children)b.classList.toggle('on',b.textContent===s.effect);
   $('info').textContent=`~${s.est_ma} mA${s.limited?' · limited by cap':''}`;
 }
 async function get(){try{s=await(await fetch('/api/state')).json();render();}catch(e){$('info').textContent='no connection';}}
@@ -50,6 +53,12 @@ function send(o){clearTimeout(timer);timer=setTimeout(async()=>{
 $('on').onchange=e=>send({on:e.target.checked});
 $('bri').oninput=e=>send({bri:+e.target.value});
 $('w').oninput=e=>send({w:+e.target.value});
+$('speed').oninput=e=>send({speed:+e.target.value});
+fetch('/api/effects').then(r=>r.json()).then(list=>{
+  const box=$('effects');
+  for(const name of list){const b=document.createElement('button');b.textContent=name;b.onclick=()=>send({effect:name});box.appendChild(b);}
+  render();
+});
 $('col').oninput=e=>{const h=e.target.value;send({r:parseInt(h.slice(1,3),16),g:parseInt(h.slice(3,5),16),b:parseInt(h.slice(5,7),16)});};
 fetch('/api/presets').then(r=>r.json()).then(list=>{
   const box=$('presets');

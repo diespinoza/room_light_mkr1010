@@ -1,6 +1,6 @@
 # Room Lighting Controller — Arduino MKR WiFi 1010 + Adafruit NeoPixel RGBW Neon-like Strip
 
-Status: phase 2 code written (2026-10-25); phase 1 verified on the bench. See README.md for current state.
+Status: phase 3 code written (2026-10-26); phases 1–2 verified on the bench. See README.md for current state.
 
 ## 1. Goal
 

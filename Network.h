@@ -3,6 +3,11 @@
 
 #include <Arduino.h>
 #include <WiFiNINA.h>
+#include "config.h"
+#if USE_MDNS
+#include <WiFiUdp.h>
+#include <ArduinoMDNS.h>
+#endif
 
 class Network {
  public:
@@ -14,6 +19,11 @@ class Network {
 
  private:
   void tryConnect();
+  void startMdns();
+#if USE_MDNS
+  WiFiUDP _udp;
+  MDNS _mdns{_udp};
+#endif
   const char *_ssid = nullptr;
   const char *_pass = nullptr;
   const char *_hostname = nullptr;

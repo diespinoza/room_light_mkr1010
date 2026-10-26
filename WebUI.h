@@ -4,6 +4,7 @@
 //   GET  /api/state   {"on":true,"r":..,"g":..,"b":..,"w":..,"bri":..,...}
 //   POST /api/state   same keys, any subset; "preset":"warm" applies a preset
 //   GET  /api/presets ["warm","cool",...]
+//   GET  /api/effects ["static","breathe",...]
 #pragma once
 
 #include <Arduino.h>
@@ -24,6 +25,7 @@ class WebUI {
   void applyJson(const char *body);
   void sendState(WiFiClient &client);
   void sendPresets(WiFiClient &client);
+  void sendEffects(WiFiClient &client);
   void sendPage(WiFiClient &client);
   void sendHeader(WiFiClient &client, int code, const char *type, size_t len);
 

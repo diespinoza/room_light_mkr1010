@@ -114,7 +114,10 @@ void WebUI::applyJson(const char *body) {
   if (getInt(body, "b", v)) { c.b = clamp8(v); colourChanged = true; }
   if (getInt(body, "w", v)) { c.w = clamp8(v); colourChanged = true; }
   if (getInt(body, "bri", v)) _state.setBrightness(clamp8(v));
+  if (getInt(body, "speed", v)) _state.setSpeed((uint8_t)constrain(v, 1L, 100L));
   if (colourChanged) _state.setColor(c);
+  char effect[16];
+  if (getStr(body, "effect", effect, sizeof(effect))) _state.setEffectByName(effect);
   if (getBool(body, "on", b)) _state.setOn(b);  // last, so {"on":false,...} wins
 }
 
@@ -130,7 +133,7 @@ void WebUI::sendHeader(WiFiClient &client, int code, const char *type, size_t le
 }
 
 void WebUI::sendState(WiFiClient &client) {
-  char buf[192];
+  char buf[224];
   size_t n = _state.toJson(buf, sizeof(buf));
   sendHeader(client, 200, "application/json", n);
   client.write((const uint8_t *)buf, n);
@@ -145,6 +148,19 @@ void WebUI::sendPresets(WiFiClient &client) {
   for (uint8_t i = 0; i < count && n < sizeof(buf) - 4; i++) {
     n += snprintf(buf + n, sizeof(buf) - n, "%s\"%s\"", i ? "," : "", p[i].name);
   }
+  buf[n++] = ']'; buf[n] = '\0';
+  sendHeader(client, 200, "application/json", n);
+  client.write((const uint8_t *)buf, n);
+}
+
+void WebUI::sendEffects(WiFiClient &client) {
+  char buf[128];
+  size_t n = 0;
+  uint8_t count;
+  const char *const *names = LightState::effectNames(count);
+  buf[n++] = '[';
+  for (uint8_t i = 0; i < count && n < sizeof(buf) - 4; i++)
+    n += snprintf(buf + n, sizeof(buf) - n, "%s\"%s\"", i ? "," : "", names[i]);
   buf[n++] = ']'; buf[n] = '\0';
   sendHeader(client, 200, "application/json", n);
   client.write((const uint8_t *)buf, n);
@@ -171,6 +187,8 @@ void WebUI::serve(WiFiClient &client) {
     sendState(client);
   } else if (isGet && !strcmp(path, "/api/presets")) {
     sendPresets(client);
+  } else if (isGet && !strcmp(path, "/api/effects")) {
+    sendEffects(client);
   } else {
     sendHeader(client, 404, "text/plain", 0);
   }

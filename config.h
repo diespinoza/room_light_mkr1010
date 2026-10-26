@@ -34,3 +34,9 @@
 #define WIFI_RETRY_MS      10000        // wait between connection attempts
 #define HTTP_PORT          80
 #define HTTP_CLIENT_TIMEOUT_MS 300      // max time spent reading one request
+
+// ---- Phase 3 ---------------------------------------------------------------
+#define USE_MDNS           1            // 0 if the ArduinoMDNS library is not installed
+#define MDNS_SERVICE_NAME  "Room light._http"
+#define SAVE_DELAY_MS      3000         // write state to flash this long after the last change
+#define DEFAULT_SPEED      50           // effect speed 1..100
