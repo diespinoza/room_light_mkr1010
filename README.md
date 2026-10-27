@@ -3,6 +3,8 @@
 WiFi room light: Arduino MKR WiFi 1010 driving an Adafruit 4689 NeoPixel RGBW
 neon strip (60 px, 5 V, 5500K). See `PLAN.md` for the full design.
 
+Repository: https://github.com/diespinoza/room_light_mkr1010
+
 ## Current state: phase 3 — effects, saved state, roomlight.local
 
 The sketch joins the home WiFi and serves a phone page at
